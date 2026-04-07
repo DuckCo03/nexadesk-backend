@@ -156,39 +156,33 @@ app.get("/tickets/:id", (req, res) => {
 
 
 
-app.get("/tickets/:id/notes", (req, res) => {
+app.get("/tickets/:id", (req, res) => {
     const ticketId = req.params.id;
 
     const sql = `
-        SELECT
-            notes.id,
-            notes.ticket_id,
-            notes.note_text,
-            notes.author_email,
-            notes.created_at,
-            MAX(users.name) AS author_name
-        FROM notes
-        LEFT JOIN users ON notes.author_email = users.email
-        WHERE notes.ticket_id = ?
-        GROUP BY
-            notes.id,
-            notes.ticket_id,
-            notes.note_text,
-            notes.author_email,
-            notes.created_at
-        ORDER BY notes.created_at DESC
+        SELECT 
+            tickets.*,
+            assignedUser.name AS assigned_name,
+            openedUser.name AS opened_by_name
+        FROM tickets
+        LEFT JOIN users AS assignedUser ON tickets.assigned_to = assignedUser.email
+        LEFT JOIN users AS openedUser ON tickets.opened_by = openedUser.email
+        WHERE tickets.id = ?
     `;
 
     db.query(sql, [ticketId], (err, results) => {
         if (err) {
             console.error(err);
-            return res.status(500).send("Failed to load notes");
+            return res.status(500).send("Failed to load ticket");
         }
 
-        res.json(results);
+        if (results.length === 0) {
+            return res.status(404).send("Ticket not found");
+        }
+
+        res.json(results[0]);
     });
 });
-
 
 app.post("/tickets/:id/notes", (req, res) => {
     const ticketId = req.params.id;
