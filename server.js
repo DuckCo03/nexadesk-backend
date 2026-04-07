@@ -153,9 +153,6 @@ app.get("/tickets/:id", (req, res) => {
         res.json(results[0]);
     });
 });
-
-
-
 app.get("/tickets/:id", (req, res) => {
     const ticketId = req.params.id;
 
@@ -183,6 +180,41 @@ app.get("/tickets/:id", (req, res) => {
         res.json(results[0]);
     });
 });
+
+
+app.get("/tickets/:id/notes", (req, res) => {
+    const ticketId = req.params.id;
+
+    const sql = `
+        SELECT
+            notes.id,
+            notes.ticket_id,
+            notes.note_text,
+            notes.author_email,
+            notes.created_at,
+            MAX(users.name) AS author_name
+        FROM notes
+        LEFT JOIN users ON notes.author_email = users.email
+        WHERE notes.ticket_id = ?
+        GROUP BY
+            notes.id,
+            notes.ticket_id,
+            notes.note_text,
+            notes.author_email,
+            notes.created_at
+        ORDER BY notes.created_at DESC
+    `;
+
+    db.query(sql, [ticketId], (err, results) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).send("Failed to load notes");
+        }
+
+        res.json(results);
+    });
+});
+
 
 app.post("/tickets/:id/notes", (req, res) => {
     const ticketId = req.params.id;
