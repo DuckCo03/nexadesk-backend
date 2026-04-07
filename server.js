@@ -207,20 +207,32 @@ app.post("/tickets/:id/notes", (req, res) => {
 
 app.put("/tickets/:id/status", (req, res) => {
     const ticketId = req.params.id;
-    const { status, reason } = req.body;
+    const { status, reason, author_email } = req.body;
 
     if (!status || !reason || reason.trim() === "") {
         return res.status(400).send("Status and reason are required");
     }
 
-    const sql = "UPDATE tickets SET status = ?, status_reason = ? WHERE id = ?";
-    db.query(sql, [status, reason, ticketId], (err, result) => {
+    const updateSql = "UPDATE tickets SET status = ?, status_reason = ? WHERE id = ?";
+
+    db.query(updateSql, [status, reason, ticketId], (err, result) => {
         if (err) {
-            console.error(err);
+            console.error("Status update error:", err);
             return res.status(500).send("Failed to update status");
         }
 
-        res.send("Status updated");
+        const noteText = `Status changed to "${status}". Reason: ${reason}`;
+        const noteSql = "INSERT INTO notes (ticket_id, note_text, author_email) VALUES (?, ?, ?)";
+
+        db.query(noteSql, [ticketId, noteText, author_email], (noteErr, noteResult) => {
+            if (noteErr) {
+                console.error("Status note insert error:", noteErr);
+                return res.status(500).send("Status updated, but failed to add note");
+            }
+
+            console.log("Status note added for ticket:", ticketId);
+            res.send("Status updated and note added");
+        });
     });
 });
 
@@ -334,7 +346,8 @@ app.get("/users/search/:term", (req, res) => {
 
 
 
-app.listen(3000, () => {
-    console.log("Server running on port 3000");
-});
+const PORT = process.env.PORT || 3000;
 
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
