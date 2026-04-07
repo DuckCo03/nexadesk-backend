@@ -82,10 +82,11 @@ app.post("/tickets", (req, res) => {
     console.log("POST /tickets hit");
     console.log("Body received:", req.body);
 
-    const { title, category, description } = req.body;
 
-    const sql = "INSERT INTO tickets (title, category, description, status) VALUES (?, ?, ?, 'Submitted')";
-    db.query(sql, [title, category, description], (err, result) => {
+    const { title, category, description, opened_by } = req.body;
+
+const sql = "INSERT INTO tickets (title, category, description, status, opened_by) VALUES (?, ?, ?, 'Submitted', ?)";
+db.query(sql, [title, category, description, opened_by], (err, result) => {
         if (err) {
             console.error(err);
             return res.status(500).send("Ticket creation failed");
