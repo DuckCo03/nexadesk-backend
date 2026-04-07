@@ -83,6 +83,7 @@ app.post("/tickets", (req, res) => {
     console.log("Body received:", req.body);
 
 
+
     const { title, category, description, opened_by } = req.body;
 
 const sql = "INSERT INTO tickets (title, category, description, status, opened_by) VALUES (?, ?, ?, 'Submitted', ?)";
@@ -134,29 +135,6 @@ app.get("/tickets/:id", (req, res) => {
     const ticketId = req.params.id;
 
     const sql = `
-        SELECT tickets.*, users.name AS assigned_name
-        FROM tickets
-        LEFT JOIN users ON tickets.assigned_to = users.email
-        WHERE tickets.id = ?
-    `;
-
-    db.query(sql, [ticketId], (err, results) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send("Failed to load ticket");
-        }
-
-        if (results.length === 0) {
-            return res.status(404).send("Ticket not found");
-        }
-
-        res.json(results[0]);
-    });
-});
-app.get("/tickets/:id", (req, res) => {
-    const ticketId = req.params.id;
-
-    const sql = `
         SELECT 
             tickets.*,
             assignedUser.name AS assigned_name,
@@ -180,6 +158,7 @@ app.get("/tickets/:id", (req, res) => {
         res.json(results[0]);
     });
 });
+
 
 
 app.get("/tickets/:id/notes", (req, res) => {
